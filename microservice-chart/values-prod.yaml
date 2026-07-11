@@ -1,0 +1,32 @@
+replicaCount: 3
+
+image:
+  tag: "1.27-alpine"
+
+ingress:
+  enabled: true
+  hosts:
+    - host: app.local
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 512Mi
+  requests:
+    cpu: 500m
+    memory: 256Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+
+env:
+  - name: APP_ENV
+    value: production
+  - name: DEBUG
+    value: "false"
+    

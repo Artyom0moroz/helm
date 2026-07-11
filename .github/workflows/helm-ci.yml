@@ -1,0 +1,44 @@
+name: Helm Chart CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Helm Lint (default)
+        run: helm lint ./microservice-chart
+
+      - name: Helm Lint (dev)
+        run: helm lint ./microservice-chart -f microservice-chart/values-dev.yaml
+
+      - name: Helm Lint (staging)
+        run: helm lint ./microservice-chart -f microservice-chart/values-staging.yaml
+
+      - name: Helm Lint (production)
+        run: helm lint ./microservice-chart -f microservice-chart/values-prod.yaml
+
+      - name: Template Render (prod)
+        run: helm template myapp ./microservice-chart -f microservice-chart/values-prod.yaml
+
+      - name: Install kubeconform
+        run: |
+          curl -sL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz
+          sudo mv kubeconform /usr/local/bin/
+
+      - name: Validate manifests
+        run: |
+          helm template myapp ./microservice-chart \
+            -f microservice-chart/values-prod.yaml | kubeconform -strict -summary
+
+      - name: Package chart
+        run: helm package ./microservice-chart
